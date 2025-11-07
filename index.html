@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Счетов v3.0 (ОФФЛАЙН)</title>
+    
+    <script>
+    !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):t.html2pdf=e()}(this,function(){"use strict";var t={product:"html2pdf.js",version:"0.10.1"},e=function(){var t=function(){};return function(e){if("object"==typeof e){var n=e.orientation,r=e.unit,i=e.format,o=e.margins,u=e.compress,a=e.precision,c=e.language,s=e.encryption,f=e.defaultFont,l=e.fontFaces,d=e.pagebreaks;t=function(e){return new Promise(function(t){var h=new e(n,r,i);h.setLanguage(c),h.setEncryption(s),h.setDefaultFont(f),h.setFontFaces(l),h.setMargins(o),h.setCompress(u),h.setPrecision(a),h.setPagebreaks(d),t(h)})}}};e()(),function(){if("undefined"!=typeof window&&window.jspdf){var n=window.jspdf;e(n.jsPDF||n)}}();var n=function(e,n){return new Promise(function(r){var i=n.canvas,o=i.width,u=i.height;if(o*u>9e6)return r(function(){});var a=document.createElement("img");a.onload=function(){var e=document.createElement("canvas");e.width=o,e.height=u;var n=e.getContext("2d");n.imageSmoothingEnabled=n.mozImageSmoothingEnabled=n.msImageSmoothingEnabled=n.webkitImageSmoothingEnabled=!1,n.drawImage(a,0,0);var i=n.getImageData(0,0,o,u).data,u=o,a=i.length,c=[],s=0,f=0,l=-1,d=-1;for(;s<a;)f=i[s++],l=i[s++],d=i[s++],s++,f===c[0]&&l===c[1]&&d===c[2]||(c[0]=f,c[1]=l,c[2]=d,n.fillStyle="rgb("+c.join(",")+")",n.fillRect(s%u/4,Math.floor(s/u/4),1,1));r(e)};var c=t.version.split(".").map(Number);c[0]>=2&&c[1]>=4?(a.crossOrigin="anonymous",a.referrerPolicy="no-referrer"):e.log("Heads up! html2pdf.js v0.10.1+ requires jspdf v2.4.0+ for PDF-transparency. Try upgrading jspdf for better results."),a.src=n.img})};function r(t,e){return"function"==typeof t?t(e):t[e]}function i(t,e){var n=document.createElement("div");return n.innerHTML=t,n.firstChild}function o(t,e,n,i){var o=Promise.all([e,n,i].map(function(e){return t[e]||[]})).then(function(t){return t.reduce(function(t,e){return t.concat(e)},[])});return o.then(function(t){t.forEach(function(t){"function"==typeof t?t(e,n,i):console.warn('Invalid hook callback (expected "function", got "'+typeof t+'"):',t)})}),o}var u=function(t){var e,n="".concat(t.text," ").concat(t.formatted);if(t.style){var r,i,o,u,a=t.style,c=JSON.stringify(a),s=JSON.parse(c),f={},l=["x","y","width","height","padding","margin"];for(var d in s)l.includes(d)?f[d]=s[d]:"string"==typeof s[d]&&s[d].endsWith("px")?s[d]=Number(s[d].slice(0,-2)):s[d]=Number(s[d]),isNaN(s[d])||(s[d]/=96/72);switch(n=n.trimLeft(),t.type){case"text":r=s.fontSize,i=s.fontFamily,o=s.fontWeight,u=s.fontStyle;var h=function(t,e,n,r){var i="normal"===n?"":n,o="normal"===r?"":r,u="".concat(i).concat(o),a={};a[u]=t;for(var c=0;c<e.length;c++)a[u]=a[u].replace(e[c].from,e[c].to);return a}(s.color,t.colorSpaces,s.textShadow,s.letterSpacing),p=h[Object.keys(h)[0]];s.color=p,t.pdf.setFont(i,o,u),t.pdf.setFontSize(r),n=t.pdf.splitTextToSize(n,t.width,t.options);break;case"image":s.src=t.src}e=Object.assign(t,s)}return[n,e]}var a="undefined"!=typeof self&&self||"undefined"!=typeof window&&window||"undefined"==typeof global?this:global,c=a.Promise||function(t){var e,n,r=[],i=function(){for(var t=0;t<r.length;t+=2)r[t](e)};return t(function(t){e=t,n=!0,i()}),{then:function(t,e){return n?void setTimeout(function(){t(e)},0):void r.push(t,e)}}};function s(t,e,n,r,a){var f=(new Date).getTime();return r=r||{},r.filename=r.filename||"file.pdf",r.image=r.image||{},r.image.type=r.image.type||"jpeg",r.image.quality=r.image.quality||.95,r.html2canvas=r.html2canvas||{},r.html2canvas.canvas=r.html2canvas.canvas||l(t),r.html2canvas.scale=r.html2canvas.scale||2,r.html2canvas.useCORS=r.html2canvas.useCORS||!1,r.jsPDF=r.jsPDF||{},r.jsPDF.orientation=r.jsPDF.orientation||"portrait",r.jsPDF.unit=r.jsPDF.unit||"mm",r.jsPDF.format=r.jsPDF.format||"a4",r.jsPDF.encryption=r.jsPDF.encryption||{},r.jsPDF.encryption.userPassword=r.jsPDF.encryption.userPassword||[],r.jsPDF.encryption.ownerPassword=r.jsPDF.encryption.ownerPassword||"",r.jsPDF.encryption.userPermissions=r.jsPDF.encryption.userPermissions||[],r.jsPDF.defaultFont=r.jsPDF.defaultFont||"Helvetica",r.jsPDF.fontFaces=r.jsPDF.fontFaces||[],r.jsPDF.margins=r.jsPDF.margins||{},r.jsPDF.margins.top=r.jsPDF.margins.top||0,r.jsPDF.margins.bottom=r.jsPDF.margins.bottom||0,r.jsPDF.margins.left=r.jsPDF.margins.left||0,r.jsPDF.margins.right=r.jsPDF.margins.right||0,r.jsPDF.pagebreaks=r.jsPDF.pagebreaks||{},r.jsPDF.pagebreaks.mode=r.jsPDF.pagebreaks.mode||"legacy",r.jsPDF.pagebreaks.avoid=r.jsPDF.pagebreaks.avoid||[],r.enableLinks=r.enableLinks||!1,r.pagebreak=r.pagebreak||{},r.pagebreak.mode=r.pagebreak.mode||"avoid-all",r.pagebreak.before=r.pagebreak.before||[],r.pagebreak.after=r.pagebreak.after||[],r.pagebreak.avoid=r.pagebreak.avoid||[],r.margin=void 0===r.margin?10:r.margin,r.autoPaging=r.autoPaging||!0,r.w=r.w||d(t,r.jsPDF),r.h=r.h||h(t,r.jsPDF),r.x=r.x||0,r.y=r.y||0,c.resolve().then(function(){return a&&a(r)}).then(function(){return p(t,{template:e,opt:r,queue:n})}).then(function(){return"function"==typeof r.html2canvas.onclone?new c(function(t){r.html2canvas.onclone(e.container),t(e.container)}):e.container}).then(function(t){r.html2canvas.onrendered=r.html2canvas.onrendered||function(t){};var e=function(t){return e.canvas=t,e.ctx=t.getContext("2d"),t};return e.canvas=r.html2canvas.canvas,e.ctx=e.canvas.getContext("2d"),r.html2canvas.onrendered(e),e.canvas&&!e.canvas.parentElement&&document.body.appendChild(e.canvas),window.html2canvas(t,r.html2canvas)}).then(function(t){r.html2canvas.canvas||e.canvas.remove();var i=r.image.type,o=r.image.quality;e.img=t.toDataURL("image/"+i,o),r.jsPDF.encryption.userPassword.length>0||""!==r.jsPDF.encryption.ownerPassword||r.jsPDF.encryption.userPermissions.length>0?(e.img=n(this,e),r.image.type="png"):e.img=n(this,e);var a=function(t,e,n,i){var o=r.jsPDF,u=r.w,a=r.h;r.autoPaging&&(r.autoPaging="slice"===r.autoPaging||!1);var c=r.x,s=r.y,f=t.width/e.width;t.width=e.width,t.height=e.height,o.addPage(r.jsPDF.format,r.jsPDF.orientation),o.addImage(i,r.image.type,c,s,u*f,a*f);var l=r.margin,d=Array.isArray(l);d?l.forEach(function(t,e){l[e]=m(t,o.internal.scaleFactor)}):l=m(l,o.internal.scaleFactor);var h=u-l[1]-l[3],p=a-l[0]-l[2],g=t.querySelectorAll(r.pagebreak.avoid),v=document.createElement("div"),w=document.createElement("div");w.innerHTML=t.innerHTML,v.appendChild(w);var b=w.children;if(r.autoPaging){for(var y,k,x,P=0;P<b.length;)w.style.height=p+"px",w.style.width=h+"px",w.style.overflow="hidden",w.style.border="1px solid red",y=b[P],k=Math.max(y.offsetTop,y.clientTop,y.scrollTop)+y.clientTop+y.clientHeight,y.clientHeight>p&&"avoid-all"!==r.pagebreak.mode&&o.addPage(),x=y,w.removeChild(y),P++;o.addPage()}n.save(r.filename,function(t){return r.finalState=t,f=(new Date).getTime()-f,n.log("Finished "+t/1E3+"s"),c.resolve()});return n};return a(e.template,e.canvas,n,e.imgData)})}var f=function(t,e){var n={template:i('<div class="html2pdf__template"></div>'),canvas:l(),ctx:null,img:null,imgData:null,queue:[]};return n.queue.push(s.bind(void 0,t,n,this,e)),n.queue.push(g.bind(void 0,t,n,this,e)),n},l=function(){var t=document.createElement("canvas");return t.style.position="fixed",t.style.left="-10000px",t.style.top=0,t.style.zIndex=-1,t.width=1,t.height=1,t},d=function(t,e){var n=e.unit,r=e.format;if("auto"===r){var i=window.getComputedStyle(t),o=parseInt(i.width),u=parseInt(i.height);r=o>u?[u,o]:[o,u]}return[].concat(r).map(function(t){return/^[0-9.]+$/.test(t)&&(t=Number(t)),t})[1]*v[n]},h=function(t,e){var n=e.unit,r=e.format;if("auto"===r){var i=window.getComputedStyle(t),o=parseInt(i.width),u=parseInt(i.height);r=o>u?[u,o]:[o,u]}return[].concat(r).map(function(t){return/^[0-9.]+$/.test(t)&&(t=Number(t)),t})[0]*v[n]},p=function(t,e){var n=e.template.cloneNode(!0),r=n.querySelector("div"),i=e.opt,a=i.pagebreak;if(r.innerHTML=t.innerHTML,"legacy"===i.jsPDF.pagebreaks.mode){var c=a.before,s=a.after,f=a.avoid;c.forEach(function(t){n.querySelectorAll(t).forEach(function(t){t.style.pageBreakBefore="always"})}),s.forEach(function(t){n.querySelectorAll(t).forEach(function(t){t.style.pageBreakAfter="always"})}),f.forEach(function(t){n.querySelectorAll(t).forEach(function(t){t.style.pageBreakInside="avoid"})})}return o(i.hooks||{},"clone",n,e).then(function(){if(i.enableLinks){var t=["a","area"],o=function(t){return"HTML"===t.tagName};n.querySelectorAll(t.join(", ")).forEach(function(t){if(!t.hasAttribute("data-html2pdf-link")){var e=t.getAttribute("href");if(!e)return;var n=r.getBoundingClientRect();t.setAttribute("data-html2pdf-link",e),t.removeAttribute("href");var i=t.getBoundingClientRect();if(o(t.parentElement)){var u=t.parentElement.getBoundingClientRect();i={top:i.top-u.top+n.top,left:i.left-u.left+n.left,width:i.width,height:i.height}}i={top:i.top-n.top,left:i.left-n.left,width:i.width,height:i.height};var a={page:void 0,x:i.left,y:i.top,w:i.width,h:i.height};e.template=a}})}return n})}var g=function(t,e,n,r){var i=n.opt;return"object"!==m(i.jsPDF)?c.reject("jsPDF not loaded. Include html2pdf.bundle.js properly."):e.pdf=new i.jsPDF,e.pdf.setR2L(i.rtl),e.pdf.setLanguage(i.lang),e.pdf.setCreationDate(new Date(i.jsPDF.updated||i.jsPDF.created||new Date)),e.pdf.setFontSize(i.jsPDF.fontSize||10),e.pdf.setMargins(i.jsPDF.margins),o(i.hooks||{},"putTotalPages",e.pdf,e).then(function(){return e})},m=function(t){return"undefined"==typeof t?"undefined":{}.toString.call(t).match(/\s([a-z|A-Z]+)/)[1].toLowerCase()},v={"pt":1,"mm":72/25.4,"cm":72/2.54,"in":72,"px":72/96,"pc":12,"em":12,"ex":6},w={};try{w.log=console.log.bind(console),w.warn=console.warn.bind(console),w.error=console.error.bind(console)}catch(t){w.log=function(){},w.warn=function(){},w.error=function(){}}var b=function(t,e){var n={};return n.init=function(){var r=t.apply(this,arguments),i=r.queue[0]=r.queue[0].then(function(t){return e.jsPDF=t.pdf,o(e.hooks||{},"jsPDF",e.jsPDF,r).then(function(){return r})});return i.then=r.queue[0].then.bind(r.queue[0]),n.to=i.then.bind(i),n},n.init.prototype=Object.create(t.prototype),n},y=function(t,e){var n=function(t){this.opt=t,this.state={w:0,h:0,x:0,y:0,xUnit:0,yUnit:0,currentPage:0,pages:[]},this.log("Initialized")};return n.prototype=Object.create(w),Object.assign(n.prototype,y.prototype),n.prototype.constructor=n,n.prototype.set=function(t,e,n){if("object"===m(t))Object.assign(this.opt,t);else{this.opt[t]=e}return this.log("Set option "+t+" to "+e),n||this,this},n.prototype.get=function(e,n){return n?r(e,this):(this.opt[e],this.opt)},n.prototype.getPdf=function(t){return t?c.resolve(this.pdf):this.pdf},n.prototype.save=function(t,e){var n=this;return this.log("Saving PDF..."),o(this.opt.hooks||{},"beforeSave",this.pdf,n).then(function(){n.pdf.save(t||n.opt.filename,function(t){return e(t,n),o(n.opt.hooks||{},"afterSave",n.pdf,n).then(function(){n.log("PDF saved.")})})})},n.prototype.output=function(t,e,n){return this.log("Outputting PDF..."),o(this.opt.hooks||{},"beforeOutput",this.pdf,this).then(function(){var r=this.pdf.output(t,e,n);return o(this.opt.hooks||{},"afterOutput",r,this).then(function(){return this.log("PDF output."),r})}.bind(this))},n.prototype.then=function(t,e){var n=this,r=this.queue[0]=this.queue[0].then(t.bind(n),e.bind(n));return r.then=this.queue[0].then.bind(r),this},n.prototype.catch=function(t){var e=this.queue[0]=this.queue[0].catch(t.bind(this));return e.then=this.queue[0].then.bind(e),e.catch=this.queue[0].catch.bind(e),this},n.prototype.from=function(t,e){return this.then(function(){var n=function(t,e,n){return"string"===e?t.querySelectorAll(e):t}[t,e]||t;if(!n)throw new Error('Could not find element "'+e+'".');return f.call(this,n,this.opt)})},n.prototype.to=function(t){return this.then(function(){return t.call(this,this.pdf)})},n.prototype.run=function(t,e){return this.then(function(){return t.call(this,this.pdf),e.call(this,this.pdf)})},n.prototype.setPage=function(t){return this.then(function(){this.pdf.setPage(t)})},n.prototype.addPage=function(){return this.then(function(){this.pdf.addPage()})},n.prototype.getNewPdf=function(t){var n=this;return e(),new c(function(r){var i=function(t){n.pdf=t,r()};o(n.opt.hooks||{},"init",i,n)})},n.prototype.add = function (e) {var n,r,i=this,a=e.opt,c=e.images,s=e.content,f=e.margin;return n=d(e,a.jsPDF),r=h(e,a.jsPDF),i.getNewPdf().then(function(){i.pdf.addPage(a.jsPDF.format,a.jsPDF.orientation)}).then(function(){return o(a.hooks||{},"beforeAdd",i.pdf,i)}).then(function(){return i.set(a,!1,!0),f=[f].length>0?f:i.opt.margin,f=Array.isArray(f)?f:[f,f,f,f],i.state.w=n-f[1]-f[3],i.state.h=r-f[0]-f[2],i.state.x=f[3],i.state.y=f[0],i.state.xUnit=a.jsPDF.unit==="mm"?72/25.4:1,i.state.yUnit=a.jsPDF.unit==="mm"?72/25.4:1,i.state.currentPage=1,i.state.pages=[{nodes:[]}],t(s).forEach(function(t){var e=t.style||{};"avoid"===e.breakPage||"avoid"===e.pageBreak?i.avoidBreak(t):"always"===e.breakPage||"always"===e.pageBreak?i.addPage():i.addNode(t,e)}),i.addImages(c),i.putPages()}).then(function(){return o(a.hooks||{},"afterAdd",i.pdf,i)})},n.prototype.addImages=function(t){var e=this,n=e.state.pages,r=t||[],i=[];r.forEach(function(t){var r={src:t.src,style:{}};i.push(u(Object.assign({},r,t),e))}),i.forEach(function(t){var r=t[1],i=n[r.page-1];i&&i.nodes.push(r)});return e},n.prototype.avoidBreak=function(t){var e=this,n=e.state.y+t.height*e.state.yUnit;return n>e.state.h?e.addPage():e.addNode(t)},n.prototype.addNode=function(t,e){var n=this,r=n.state.currentPage-1;e&&e.hasOwnProperty("page")?e.page>=1&&e.page<=n.state.pages.length?(r=e.page-1,n.state.pages[r].nodes.push(t)):n.log("Page ".concat(e.page," does not exist. node dropped.")):n.state.pages[r].nodes.push(t)},n.prototype.putPages=function(){var t=this;return new c(function(e){t.state.pages.forEach(function(e,n){n>0&&t.pdf.addPage(),e.nodes.forEach(function(e){var n=u(e,t);t.putNode(n)})}),e()})},n.prototype.putNode=function(t){var e=this.pdf.getFont();try{var n=t[0],r=t[1];switch(r.type){case"text":this.pdf.setFont(r.fontFamily,r.fontWeight,r.fontStyle),this.pdf.setFontSize(r.fontSize),this.pdf.setTextColor(r.color.r,r.color.g,r.color.b),this.pdf.text(n,r.x,r.y,{rotation:r.rotate,transform:r.transform,styles:r});break;case"image":this.pdf.addImage(r.src,r.x,r.y,r.width,r.height,r.rotation,r.transform);break;case"line":this.pdf.setLineWidth(r.lineWidth),this.pdf.setDrawColor(r.color.r,r.color.g,r.color.b),this.pdf.line(r.x1,r.y1,r.x2,r.y2);break;case"link":this.pdf.link(r.x,r.y,r.width,r.height,r.url)}}catch(t){this.log("Error adding node: ".concat(t.message)),this.pdf.setFont(e.fontFamily,e.fontWeight,e.fontStyle)}}},n}(e,t),k=function(t){var e=y.call(this,t);return e.queue[0]=new c(function(t){return t(e)}),e};return k.prototype=Object.create(y.prototype),k.prototype.constructor=k,k.prototype.toCanvas=function(t,e,n){var r={};"string"==typeof t?(r.type=t,r.options=e):r=t,e=r.options||e,n=r.onrendered||n;var i=Object.assign({},this.opt,e?{html2canvas:e}:{},n?{html2canvas:{onrendered:n}}:{});return this.then(function(){var t=this,e=f.call(this,this.fromSource,i);return e.to=function(e){return t.then(function(){return e.call(this,this.fromSource.canvas)})},e})},k.prototype.toImg=function(t,e,n){var r={};"string"==typeof t?(r.type=t,r.options=e):r=t,e=r.options||e,n=r.onrendered||n;var i=Object.assign({},this.opt,e?{image:e}:{},n?{image:{onrendered:n}}:{});return this.then(function(){var t=this,e=f.call(this,this.fromSource,i);return e.to=function(e){return t.then(function(){return e.call(this,this.fromSource.img)})},e})},k.prototype.toPdf=function(t,e,n){var r={};"string"==typeof t?(r.type=t,r.options=e):r=t,e=r.options||e,n=r.onrendered||n;var i=Object.assign({},this.opt,e?{jsPDF:e}:{},n?{jsPDF:{onrendered:n}}:{});return this.then(function(){var t=this,e=f.call(this,this.fromSource,i);return e.to=function(e){return t.then(function(){return e.call(this,this.fromSource.pdf)})},e})},k.prototype.from=function(t,e){return this.fromSource={val:t,type:e||("string"==typeof t?"string":"element")},b(y,this.opt).call(this,f)},k.prototype.toContainer = function (e) {var n = this.opt;return this.then(function () {var r = f.call(this, this.fromSource, n);return e && e(r.template), r.then(function () {return t.add.call(this, r), r.template})})},new k(t,e)});
+    </script>
+
+    <style>
+        /* Общие стили */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+        }
+
+        /* --- 1. ПАНЕЛЬ УПРАВЛЕНИЯ (ЛЕВАЯ) --- */
+        .controls {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            /* Позволяет панели прокручиваться, если услуг много */
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .controls h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .controls label {
+            display: block;
+            font-weight: 600;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .controls input[type="text"],
+        .controls input[type="number"],
+        .controls textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .controls textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        /* Стили для строк услуг в панели управления */
+        #service-list-controls {
+            margin-top: 10px;
+        }
+        .service-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 30px;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .service-row input {
+            padding: 8px;
+        }
+        .delete-row-btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .delete-row-btn:hover { background-color: #c0392b; }
+
+        /* Кнопки */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #add-service-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        #add-service-btn:hover { background-color: #218838; }
+        
+        #download-pdf {
+            background-color: #007bff;
+            color: white;
+        }
+        #download-pdf:hover { background-color: #0056b3; }
+
+
+        /* --- 2. ПРЕДПРОСМОТР СЧЕТА (ПРАВЫЙ) --- */
+        #invoice-preview {
+            background-color: #ffffff;
+            padding: 40px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid #ddd;
+        }
+        #invoice-preview h1 {
+            color: #000;
+            margin-top: 0;
+            text-align: right;
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .invoice-details table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .invoice-details th, .invoice-details td {
+            border: 1px solid #eee;
+            padding: 12px;
+            text-align: left;
+        }
+        .invoice-details th {
+            background-color: #f9f9f9;
+        }
+        .total {
+            text-align: right;
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* Медиа-запрос для маленьких экранов (телефонов) */
+        @media (max-width: 800px) {
+            body {
+                grid-template-columns: 1fr; /* Одна колонка */
+            }
+            .controls {
+                max-height: none; /* Убираем ограничение по высоте */
+                order: 2; /* Панель управления теперь внизу */
+            }
+            #invoice-preview {
+                order: 1; /* Предпросмотр теперь вверху */
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h2>Данные для счета</h2>
+        
+        <label for="invoice-num">Номер счета:</label>
+        <input type="text" id="invoice-num" value="12345">
+        
+        <label for="client-name">Имя клиента:</label>
+        <input type="text" id="client-name" placeholder="ООО 'Ромашка'">
+        
+        <label for="client-details">Реквизиты клиента:</label>
+        <textarea id="client-details" placeholder="ИНН, адрес..."></textarea>
+        
+        <hr style="margin-top: 20px;">
+        
+        <label>Список Услуг:</label>
+        <div id="service-list-controls">
+            </div>
+        
+        <button id="add-service-btn" type="button" class="btn">
+            + Добавить услугу
+        </button>
+        
+        <hr style="margin-top: 20px;">
+        
+        <button id="download-pdf" class="btn">Скачать PDF</button>
+    </div>
+
+    <div id="invoice-preview">
+        <h1>Счет №<span id="preview-invoice-num">...</span></h1>
+        
+        <div class="invoice-header">
+            <div>
+                <strong>Исполнитель:</strong><br>
+                ИП Иванов И.И.<br>
+                ИНН 1234567890<br>
+                г. Москва, ул. Примерная, д. 1
+            </div>
+            <div>
+                <strong>Заказчик:</strong><br>
+                <strong id="preview-client-name">...</strong><br>
+                <div id="preview-client-details" style="white-space: pre-line;">...</div>
+            </div>
+        </div>
+
+        <div class="invoice-details">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Описание Услуги</th>
+                        <th>Стоимость</th>
+                    </tr>
+                </thead>
+                <tbody id="preview-service-list">
+                    </tbody>
+            </table>
+        </div>
+        
+        <div class="total">
+            ИТОГО: <span id="preview-total-cost">0.00</span> ₽
+        </div>
+    </div>
+
+
+    <script>
+        // --- Находим все ОСНОВНЫЕ элементы ---
+        const controls = document.querySelector('.controls');
+        const invoiceNumInput = document.getElementById('invoice-num');
+        const clientNameInput = document.getElementById('client-name');
+        const clientDetailsInput = document.getElementById('client-details');
+        const serviceListControls = document.getElementById('service-list-controls');
+        const addServiceBtn = document.getElementById('add-service-btn');
+        const downloadPdfBtn = document.getElementById('download-pdf');
+
+        // --- Элементы в ПРЕДПРОСМОТРЕ ---
+        const invoiceNumPreview = document.getElementById('preview-invoice-num');
+        const clientNamePreview = document.getElementById('preview-client-name');
+        const clientDetailsPreview = document.getElementById('preview-client-details');
+        const previewServiceList = document.getElementById('preview-service-list');
+        const totalCostPreview = document.getElementById('preview-total-cost');
+        
+        
+        /**
+         * ГЛАВНАЯ ФУНКЦИЯ: Обновляет весь предпросмотр
+         */
+        function updatePreview() {
+            // 1. Обновляем простые поля (Клиент, Номер счета)
+            invoiceNumPreview.innerText = invoiceNumInput.value || "...";
+            clientNamePreview.innerText = clientNameInput.value || "...";
+            clientDetailsPreview.innerText = clientDetailsInput.value || "...";
+            
+            // 2. Очищаем старый список услуг в предпросмотре
+            previewServiceList.innerHTML = '';
+            
+            // 3. Обновляем список услуг и считаем ИТОГО
+            let totalCost = 0;
+            
+            // Находим ВСЕ строки услуг в ПАНЕЛИ УПРАВЛЕНИЯ
+            const serviceRows = serviceListControls.querySelectorAll('.service-row');
+            
+            serviceRows.forEach(row => {
+                // Находим инпуты ВНУТРИ этой строки
+                const descInput = row.querySelector('.service-desc');
+                const costInput = row.querySelector('.service-cost');
+                
+                const description = descInput.value || "Описание услуги";
+                const cost = parseFloat(costInput.value) || 0;
+                
+                totalCost += cost;
+                
+                // Создаем новую строку (<tr>) для таблицы ПРЕДПРОСМОТРА
+                const previewRow = document.createElement('tr');
+                previewRow.innerHTML = `
+                    <td>${description}</td>
+                    <td>${cost.toFixed(2)} ₽</td>
+                `;
+                // Добавляем ее в таблицу предпросмотра
+                previewServiceList.appendChild(previewRow);
+            });
+            
+            // 4. Обновляем ИТОГО
+            totalCostPreview.innerText = totalCost.toFixed(2);
+        }
+
+        /**
+         * Функция: Добавляет новую строку в ПАНЕЛИ УПРАВЛЕНИЯ
+         */
+        function addServiceRow() {
+            // 1. Создаем div-контейнер для новой строки
+            const newRow = document.createElement('div');
+            newRow.classList.add('service-row');
+            
+            // 2. Заполняем его HTML-кодом с инпутами и кнопкой
+            newRow.innerHTML = `
+                <input type="text" class="service-desc" placeholder="Описание услуги">
+                <input type="number" classка" step="0.01">
+                <button type="button" class="delete-row-btn">X</button>
+            `;
+            
+            // 3. Добавляем эту строку в контейнер
+            serviceListControls.appendChild(newRow);
+            
+            // 4. ВАЖНО: Добавляем слушателя событий на кнопку "Удалить" этой строки
+            newRow.querySelector('.delete-row-btn').addEventListener('click', () => {
+                newRow.remove(); // Удаляем эту строку
+                updatePreview(); // Пересчитываем все
+            });
+            
+            // 5. ВАЖНО: Добавляем слушателей на инпуты этой строки
+            newRow.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', updatePreview);
+            });
+        }
+        
+        // --- Назначаем слушателей событий ---
+
+        // 1. Слушатель на кнопку "Добавить услугу"
+        addServiceBtn.addEventListener('click', () => {
+            addServiceRow();
+            updatePreview(); 
+        });
+
+        // 2. Слушатели на "общие" инпуты (номер, клиент)
+        [invoiceNumInput, clientNameInput, clientDetailsInput].forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+        
+        // 3. Слушатель на кнопку "Скачать PDF"
+        downloadPdfBtn.addEventListener('click', () => {
+            // Вот здесь мы используем функцию html2pdf()
+            // Она стала доступна из-за большого блока кода в <head>
+            
+            const invoiceElement = document.getElementById('invoice-preview');
+            const opt = {
+                margin:       10,
+                filename:     `Счет_${invoiceNumInput.value}_${clientNameInput.value}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // Запускаем генерацию PDF
+            html2pdf().from(invoiceElement).set(opt).save();
+        });
+
+        // --- Запуск при загрузке ---
+        addServiceRow(); // Добавляем одну пустую строку при загрузке
+        updatePreview(); // Запускаем один раз, чтобы синхронизировать все
+        
+    </script>
+
+</body>
+</html>
