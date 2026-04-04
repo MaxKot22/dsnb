@@ -1,73 +1,59 @@
 import os
 import asyncio
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-import google.generativeai as genai
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import threading
+from google import genai
 
 # 1. ФЕЙК-СЕРВЕР ДЛЯ RENDER
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"I am alive")
+        self.wfile.write(b"OK")
 
 def run_health_check():
     port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
-    server.serve_forever()
+    httpd = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+    httpd.serve_forever()
 
-# 2. НАСТРОЙКИ
+# 2. НАСТРОЙКИ КЛЮЧЕЙ
 TOKEN = os.getenv('TELEGRAM_TOKEN')
 GEMINI_KEY = os.getenv('GEMINI_API_KEY')
 
-# Проверка ключа Gemini
-# Настройка ИИ
-genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Инициализация нового клиента Google AI
+client = genai.Client(api_key=GEMINI_KEY)
+MODEL_ID = "gemini-1.5-flash" # Самая быстрая и стабильная модель
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
-history = {}
 
 @dp.message(Command("start"))
-async def start(message: types.Message):
-    await message.answer("ИИ-бот на связи! Попробуй написать мне что-нибудь.")
+async def start_cmd(message: types.Message):
+    await message.answer("Бот обновлен до последней версии API! Я готов к общению.")
 
 @dp.message()
-async def talk(message: types.Message):
+async def handle_message(message: types.Message):
     if not message.text: return
     
-    chat_id = message.chat.id
-    if chat_id not in history: history[chat_id] = []
-    
-    # Сохраняем контекст (имя: текст)
-    history[chat_id].append(f"{message.from_user.first_name}: {message.text}")
-    if len(history[chat_id]) > 20: history[chat_id].pop(0)
-
-    # Проверяем: личка или упоминание
-    bot_user = await bot.get_me()
-    is_private = message.chat.type == 'private'
-    is_mentioned = f"@{bot_user.username}" in message.text
-    
-    if is_private or is_mentioned:
+    # Отвечаем в личке или если тегнули
+    bot_info = await bot.get_me()
+    if message.chat.type == 'private' or f"@{bot_info.username}" in message.text:
         try:
-            # Запрос к ИИ
-            prompt = "\n".join(history[chat_id])
-            response = model.generate_content(prompt)
-            
-            if response.text:
-                await message.reply(response.text)
-            else:
-                await message.reply("ИИ прислал пустой ответ. Проверь настройки API.")
-                
+            # Новый способ вызова Gemini (через новый SDK)
+            response = client.models.generate_content(
+                model=MODEL_ID,
+                contents=message.text
+            )
+            await message.reply(response.text)
         except Exception as e:
-            # Бот сам скажет, если ИИ выдал ошибку
-            await message.reply(f"Ошибка ИИ: {e}")
+            await message.reply(f"Ошибка нового API: {e}")
 
 async def main():
+    # Запуск проверки здоровья для Render
     threading.Thread(target=run_health_check, daemon=True).start()
+    # Запуск бота
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
