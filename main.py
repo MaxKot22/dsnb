@@ -24,7 +24,7 @@ GROQ_KEY = os.getenv('GROQ_API_KEY')
 
 client = AsyncGroq(api_key=GROQ_KEY)
 # Используем Llama 3 8B — она самая быстрая и дерзкая
-MODEL_ID = "llama3-8b-8192" 
+MODEL_ID = "llama-3.1-8b-instant"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
