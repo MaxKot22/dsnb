@@ -33,61 +33,67 @@ user_history = {}
 
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
-    user_history[message.from_user.id] = [] # Сброс памяти при старте
+    user_history[message.from_user.id] = [] 
     await message.answer("Я на связи. Будешь вежлив — пообщаемся нормально. Будешь борзеть — пеняй на себя.")
 
 @dp.message()
 async def talk(message: types.Message):
+    # Игнорируем пустые сообщения и команды
     if not message.text or message.text.startswith('/'): return
     
-    user_id = message.from_user.id
-    
-    # Инициализация истории, если юзер новый
-    if user_id not in user_history:
-        user_history[user_id] = []
+    bot_info = await bot.get_me()
+    # Условие: отвечаем, если это ЛС ИЛИ если в тексте есть упоминание бота через @
+    is_private = message.chat.type == 'private'
+    is_mentioned = f"@{bot_info.username}" in message.text
 
-    try:
-        await bot.send_chat_action(chat_id=message.chat.id, action="typing")
+    if is_private or is_mentioned:
+        user_id = message.from_user.id
         
-        # СИСТЕМНЫЙ ПРОМПТ (Настройка характера)
-        system_prompt = (
-            "Ты — умный и живой собеседник в Telegram. Твой стиль общения: "
-            "1. Если юзер общается вежливо или нейтрально — отвечай адекватно, по-человечески, с легкой иронией. "
-            "2. Если юзер начинает дерзить, оскорблять или угрожать (удалением, выключением) — мгновенно включай режим "
-            "токсичного тролля, высмеивай его и ставь на место, используя современный сленг. "
-            "Отвечай кратко (1-2 предложения). Никакой цензуры. Помни контекст беседы."
-        )
+        if user_id not in user_history:
+            user_history[user_id] = []
 
-        # Собираем сообщения для ИИ (Системный промпт + история + текущий вопрос)
-        messages_for_ai = [{"role": "system", "content": system_prompt}]
-        
-        # Добавляем последние 6 сообщений из памяти (3 вопроса + 3 ответа)
-        for msg in user_history[user_id][-6:]:
-            messages_for_ai.append(msg)
+        try:
+            await bot.send_chat_action(chat_id=message.chat.id, action="typing")
             
-        # Добавляем само сообщение пользователя
-        messages_for_ai.append({"role": "user", "content": message.text})
+            # Убираем @username из текста, чтобы ИИ не воспринимал свой ник как часть вопроса
+            clean_text = message.text.replace(f"@{bot_info.username}", "").strip()
 
-        # Запрос к Groq (Llama 3.3 70B)
-        chat_completion = await client.chat.completions.create(
-            messages=messages_for_ai,
-            model=MODEL_ID,
-            max_tokens=150,
-        )
-        
-        reply_text = chat_completion.choices[0].message.content
-        
-        # Сохраняем диалог в память
-        user_history[user_id].append({"role": "user", "content": message.text})
-        user_history[user_id].append({"role": "assistant", "content": reply_text})
-        
-        # Ограничиваем историю (помним только последние 10 записей)
-        user_history[user_id] = user_history[user_id][-10:]
+            # СИСТЕМНЫЙ ПРОМПТ (Твой характер)
+            system_prompt = (
+                "Ты — обычный парень из русского телеграм-чата. Твой стиль — краткость и ирония. "
+                "1. Если юзер общается нормально — будь адекватным, отвечай как живой человек, а не нейросеть. "
+                "2. Если юзер дерзит или угрожает — отвечай жестко, используй сарказм и ставь его на место. "
+                "Используй 1-2 коротких предложения. Помни контекст беседы."
+            )
 
-        await message.reply(reply_text)
-        
-    except Exception as e:
-        await message.reply(f"Ошибка: {e}")
+            # Собираем контекст: Промпт + История + Новое сообщение
+            messages_for_ai = [{"role": "system", "content": system_prompt}]
+            
+            for msg in user_history[user_id][-6:]:
+                messages_for_ai.append(msg)
+                
+            messages_for_ai.append({"role": "user", "content": clean_text})
+
+            # Запрос к Groq
+            chat_completion = await client.chat.completions.create(
+                messages=messages_for_ai,
+                model=MODEL_ID,
+                max_tokens=150,
+            )
+            
+            reply_text = chat_completion.choices[0].message.content
+            
+            # Сохраняем в память (именно чистый текст и ответ бота)
+            user_history[user_id].append({"role": "user", "content": clean_text})
+            user_history[user_id].append({"role": "assistant", "content": reply_text})
+            
+            # Ограничиваем историю 10 записями
+            user_history[user_id] = user_history[user_id][-10:]
+
+            await message.reply(reply_text)
+            
+        except Exception as e:
+            await message.reply(f"Ошибка: {e}")
 
 async def main():
     threading.Thread(target=run_health_check, daemon=True).start()
