@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from google import genai
 
-# 1. ФЕЙК-СЕРВЕР
+# 1. ФЕЙК-СЕРВЕР ДЛЯ RENDER
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -24,44 +24,44 @@ GEMINI_KEY = os.getenv('GEMINI_API_KEY')
 
 client = genai.Client(api_key=GEMINI_KEY)
 
-# АВТО-ПОДБОР МОДЕЛИ
-def get_working_model():
-    try:
-        models = list(client.models.list())
-        # Ищем любую модель, которая поддерживает генерацию контента
-        for m in models:
-            if "generateContent" in m.supported_methods:
-                print(f"--- НАЙДЕНА РАБОЧАЯ МОДЕЛЬ: {m.name} ---")
-                return m.name
-        return "gemini-1.5-flash" # Запасной вариант
-    except Exception as e:
-        print(f"Ошибка при поиске моделей: {e}")
-        return "gemini-1.5-flash"
-
-MODEL_ID = get_working_model()
+# Актуальная модель 2026 года согласно документации Google
+MODEL_ID = "gemini-3-flash-preview"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
-    await message.answer(f"Я запущен! Использую модель: {MODEL_ID}")
+    await message.answer("Система обновлена под актуальные спецификации. Готов к работе!")
 
 @dp.message()
-async def handle_message(message: types.Message):
-    if not message.text: return
+async def talk(message: types.Message):
+    if not message.text or message.text.startswith('/'): return
     
     bot_info = await bot.get_me()
     if message.chat.type == 'private' or f"@{bot_info.username}" in message.text:
         try:
-            # Используем найденную модель
+            # Основной запрос к актуальной модели
             response = client.models.generate_content(
                 model=MODEL_ID,
                 contents=message.text
             )
             await message.reply(response.text)
         except Exception as e:
-            await message.reply(f"Ошибка API ({MODEL_ID}): {e}")
+            # СИСТЕМА ДИАГНОСТИКИ: Если модель не подошла, вытягиваем реальный список
+            try:
+                available_models = client.models.list()
+                model_names = [m.name for m in available_models if "generateContent" in m.supported_methods]
+                
+                error_msg = (
+                    f"Ошибка API: {e}\n\n"
+                    f"⚠️ Google не пустил к '{MODEL_ID}'.\n"
+                    f"Доступные модели для твоего ключа:\n"
+                    f"{chr(10).join(model_names[:10])}"
+                )
+                await message.reply(error_msg)
+            except Exception as diag_e:
+                await message.reply(f"Критическая ошибка доступа. API-ключ не работает: {e}")
 
 async def main():
     threading.Thread(target=run_health_check, daemon=True).start()
