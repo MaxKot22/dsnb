@@ -24,7 +24,7 @@ GEMINI_KEY = os.getenv('GEMINI_API_KEY')
 
 # Инициализация нового клиента Google AI
 client = genai.Client(api_key=GEMINI_KEY)
-MODEL_ID = "gemini-2.0-flash" # Используем актуальную версию 2.0
+MODEL_ID = "gemini-1.5-flash"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
