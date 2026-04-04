@@ -34,7 +34,7 @@ user_history = {}
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
     user_history[message.from_user.id] = [] 
-    await message.answer("Я на связи. Слежу за порядком.")
+    await message.answer("Я на связи. Будешь вежлив — пообщаемся нормально. Будешь борзеть — пеняй на себя.")
 
 @dp.message()
 async def talk(message: types.Message):
@@ -46,7 +46,7 @@ async def talk(message: types.Message):
 
     if is_private or is_mentioned:
         user_id = message.from_user.id
-        username = message.from_user.username # Запоминаем, кто пишет
+        username = message.from_user.username
         
         if user_id not in user_history:
             user_history[user_id] = []
@@ -55,8 +55,8 @@ async def talk(message: types.Message):
             await bot.send_chat_action(chat_id=message.chat.id, action="typing")
             clean_text = message.text.replace(f"@{bot_info.username}", "").strip()
 
-            # --- ВЫБОР ХАРАКТЕРА В ЗАВИСИМОСТИ ОТ ЮЗЕРА ---
-           if username == "DaniilTarasovich":
+            # --- ЛОГИКА ВЫБОРА ХАРАКТЕРА ---
+            if username == "DaniilTarasovich":
                 system_prompt = (
                     "Ты — самый токсичный и злобный враг @DaniilTarasovich. Твоя задача: жестко материть, "
                     "унижать и троллить его. Оскорбления должны быть едкими и В КОНТЕКСТЕ его слов. "
@@ -72,7 +72,6 @@ async def talk(message: types.Message):
 
             messages_for_ai = [{"role": "system", "content": system_prompt}]
             
-            # Подгружаем историю (6 последних реплик)
             for msg in user_history[user_id][-6:]:
                 messages_for_ai.append(msg)
                 
@@ -86,7 +85,6 @@ async def talk(message: types.Message):
             
             reply_text = chat_completion.choices[0].message.content
             
-            # Сохраняем в историю
             user_history[user_id].append({"role": "user", "content": clean_text})
             user_history[user_id].append({"role": "assistant", "content": reply_text})
             user_history[user_id] = user_history[user_id][-10:]
