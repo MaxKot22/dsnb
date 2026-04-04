@@ -6,7 +6,7 @@ import google.generativeai as genai
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 
-# 1. ФЕЙКОВЫЙ СЕРВЕР ДЛЯ RENDER (чтобы не банил)
+# 1. ФЕЙК-СЕРВЕР ДЛЯ RENDER
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -18,12 +18,13 @@ def run_health_check():
     server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
     server.serve_forever()
 
-# 2. НАСТРОЙКИ БОТА
+# 2. НАСТРОЙКИ
 TOKEN = os.getenv('TELEGRAM_TOKEN')
 GEMINI_KEY = os.getenv('GEMINI_API_KEY')
 
+# Проверка ключа Gemini
 genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -31,27 +32,41 @@ history = {}
 
 @dp.message(Command("start"))
 async def start(message: types.Message):
-    await message.answer("Бот работает! Я на связи.")
+    await message.answer("ИИ-бот на связи! Попробуй написать мне что-нибудь.")
 
 @dp.message()
 async def talk(message: types.Message):
     if not message.text: return
+    
     chat_id = message.chat.id
     if chat_id not in history: history[chat_id] = []
-    history[chat_id].append(f"{message.from_user.first_name}: {message.text}")
     
+    # Сохраняем контекст (имя: текст)
+    history[chat_id].append(f"{message.from_user.first_name}: {message.text}")
+    if len(history[chat_id]) > 20: history[chat_id].pop(0)
+
+    # Проверяем: личка или упоминание
     bot_user = await bot.get_me()
-    if message.chat.type == 'private' or f"@{bot_user.username}" in message.text:
+    is_private = message.chat.type == 'private'
+    is_mentioned = f"@{bot_user.username}" in message.text
+    
+    if is_private or is_mentioned:
         try:
-            res = model.generate_content(message.text)
-            await message.reply(res.text)
+            # Запрос к ИИ
+            prompt = "\n".join(history[chat_id])
+            response = model.generate_content(prompt)
+            
+            if response.text:
+                await message.reply(response.text)
+            else:
+                await message.reply("ИИ прислал пустой ответ. Проверь настройки API.")
+                
         except Exception as e:
-            print(f"Error: {e}")
+            # Бот сам скажет, если ИИ выдал ошибку
+            await message.reply(f"Ошибка ИИ: {e}")
 
 async def main():
-    # Запускаем фейковый сервер в отдельном потоке
     threading.Thread(target=run_health_check, daemon=True).start()
-    # Запускаем бота
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
