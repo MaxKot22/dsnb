@@ -24,7 +24,7 @@ GEMINI_KEY = os.getenv('GEMINI_API_KEY')
 
 # Проверка ключа Gemini
 genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
