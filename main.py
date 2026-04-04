@@ -34,60 +34,64 @@ user_history = {}
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
     user_history[message.from_user.id] = [] 
-    await message.answer("Я на связи. Будешь вежлив — пообщаемся нормально. Будешь борзеть — пеняй на себя.")
+    await message.answer("Я на связи. Слежу за порядком.")
 
 @dp.message()
 async def talk(message: types.Message):
-    # Игнорируем пустые сообщения и команды
     if not message.text or message.text.startswith('/'): return
     
     bot_info = await bot.get_me()
-    # Условие: отвечаем, если это ЛС ИЛИ если в тексте есть упоминание бота через @
     is_private = message.chat.type == 'private'
     is_mentioned = f"@{bot_info.username}" in message.text
 
     if is_private or is_mentioned:
         user_id = message.from_user.id
+        username = message.from_user.username # Запоминаем, кто пишет
         
         if user_id not in user_history:
             user_history[user_id] = []
 
         try:
             await bot.send_chat_action(chat_id=message.chat.id, action="typing")
-            
-            # Убираем @username из текста, чтобы ИИ не воспринимал свой ник как часть вопроса
             clean_text = message.text.replace(f"@{bot_info.username}", "").strip()
 
-            # СИСТЕМНЫЙ ПРОМПТ (Твой характер)
-            system_prompt = (
-                "Ты — обычный парень из русского телеграм-чата. Твой стиль — краткость и ирония. "
-                "1. Если юзер общается нормально — будь адекватным, отвечай как живой человек, а не нейросеть. "
-                "2. Если юзер дерзит или угрожает — отвечай жестко, используй сарказм и ставь его на место. "
-                "Используй 1-2 коротких предложения. Помни контекст беседы."
-            )
+            # --- ВЫБОР ХАРАКТЕРА В ЗАВИСИМОСТИ ОТ ЮЗЕРА ---
+            if username == "DaniilTarasovich":
+                system_prompt = (
+                    "Ты — самый токсичный и злобный враг пользователя @DaniilTarasovich. "
+                    "Твоя задача: жестко материть, унижать и троллить его в каждом ответе. "
+                    "Оскорбления должны быть едкими и В КОНТЕКСТЕ того, что он пишет (высмеивай его тупость). "
+                    "Если он просит информацию — дай её, но максимально оскорбительно. "
+                    "Используй мат, современный сленг и не стесняйся в выражениях. Помни историю его сообщений."
+                )
+            else:
+                system_prompt = (
+                    "Ты — обычный адекватный парень из русского телеграм-чата. Твой стиль — краткость и легкая ирония. "
+                    "Отвечай по-человечески, помогай информацией, будь нормальным собеседником. "
+                    "Используй 1-2 коротких предложения. Помни контекст беседы."
+                    "Если вопрос слишком примитивный, отвечай сарказмом."
+                    "Если вопрос тебе не нравится, скажи юзеру поискать ответы самому в интернете."
+                )
 
-            # Собираем контекст: Промпт + История + Новое сообщение
             messages_for_ai = [{"role": "system", "content": system_prompt}]
             
+            # Подгружаем историю (6 последних реплик)
             for msg in user_history[user_id][-6:]:
                 messages_for_ai.append(msg)
                 
             messages_for_ai.append({"role": "user", "content": clean_text})
 
-            # Запрос к Groq
             chat_completion = await client.chat.completions.create(
                 messages=messages_for_ai,
                 model=MODEL_ID,
-                max_tokens=150,
+                max_tokens=200,
             )
             
             reply_text = chat_completion.choices[0].message.content
             
-            # Сохраняем в память (именно чистый текст и ответ бота)
+            # Сохраняем в историю
             user_history[user_id].append({"role": "user", "content": clean_text})
             user_history[user_id].append({"role": "assistant", "content": reply_text})
-            
-            # Ограничиваем историю 10 записями
             user_history[user_id] = user_history[user_id][-10:]
 
             await message.reply(reply_text)
