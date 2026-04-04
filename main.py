@@ -23,8 +23,9 @@ TOKEN = os.getenv('TELEGRAM_TOKEN')
 GEMINI_KEY = os.getenv('GEMINI_API_KEY')
 
 # Проверка ключа Gemini
+# Настройка ИИ
 genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+model = genai.GenerativeModel('models/gemini-1.5-flash')
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
