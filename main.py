@@ -1,6 +1,7 @@
 import os
 import asyncio
 import threading
+import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -28,8 +29,9 @@ MODEL_ID = "llama-3.3-70b-versatile"
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Храним историю для всего ЧАТА
-chat_history = {}
+# Словари памяти
+chat_history = {}  # Для контекста беседы
+chat_stats = {}    # Для счетчиков сообщений и символов
 
 # Словарь для перевода тегов в реальные имена
 KNOWN_USERS = {
@@ -42,8 +44,49 @@ KNOWN_USERS = {
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
     chat_history[message.chat.id] = []
-    await message.answer("Здравствуйте! Я готов помогать. Общайтесь, а я буду следить за контекстом.")
+    chat_stats[message.chat.id] = {}
+    await message.answer("Система запущена! Я начал сбор статистики. Общайтесь, а по команде /stats я проанализирую вашу активность.")
 
+# === КОМАНДА ДЛЯ АНАЛИЗА СТАТИСТИКИ ===
+@dp.message(Command("stats"))
+async def get_stats_analysis(message: types.Message):
+    chat_id = message.chat.id
+    
+    if chat_id not in chat_stats or not chat_stats[chat_id]:
+        await message.answer("Статистика пока пуста. Напишите что-нибудь!")
+        return
+
+    await bot.send_chat_action(chat_id=chat_id, action="typing")
+
+    # Формируем отчет для нейросети на основе реальных данных
+    raw_stats_report = "Данные по активности участников:\n"
+    for user, data in chat_stats[chat_id].items():
+        avg_len = data['chars'] // data['msgs'] if data['msgs'] > 0 else 0
+        raw_stats_report += f"- {user}: {data['msgs']} сообщений, {data['chars']} символов всего (в среднем {avg_len} на сообщение).\n"
+
+    # Промпт для ИИ-аналитика
+    analyst_prompt = (
+        "Ты — ироничный и проницательный аналитик чата. Тебе дали статистику активности участников. "
+        "Твоя задача: проанализировать стиль каждого. Кто пишет много коротких фраз (спамер), а кто редко, но длинно (философ). "
+        "Сделай смешные выводы и подколи участников за их привычки. "
+        "ОСОБОЕ ПРАВИЛО: Максим — твой создатель. Хвали его за любую активность, называй это гениальным лаконизмом или мудрой глубиной. "
+        "Не используй мат и символы @. Имена: Даник, Артур, Алексей, Дима, Максим."
+    )
+
+    try:
+        completion = await client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": analyst_prompt},
+                {"role": "user", "content": f"Проанализируй эти цифры и выдай вердикт:\n{raw_stats_report}"}
+            ],
+            model=MODEL_ID,
+            temperature=0.8,
+        )
+        await message.reply(completion.choices[0].message.content)
+    except Exception as e:
+        await message.reply(f"Ошибка анализа: {e}")
+
+# === ОСНОВНОЙ ОБРАБОТЧИК ===
 @dp.message()
 async def talk(message: types.Message):
     if not message.text or message.text.startswith('/'):
@@ -52,69 +95,56 @@ async def talk(message: types.Message):
     bot_info = await bot.get_me()
     chat_id = message.chat.id
     
-    # === ПОЛУЧЕНИЕ ИМЕНИ ===
+    # --- ОПРЕДЕЛЕНИЕ ИМЕНИ ---
     raw_username = message.from_user.username
-    # Если юзернейм есть в нашем словаре, берем реальное имя.
-    # Если нет (как у Димы), берем имя из профиля Telegram (first_name)
     if raw_username and raw_username in KNOWN_USERS:
         display_name = KNOWN_USERS[raw_username]
     else:
-        display_name = message.from_user.first_name or raw_username or "anon"
+        # Если это Дима (нет тега) или другой новый участник
+        display_name = message.from_user.first_name or "Дима"
+
+    # --- СБОР СТАТИСТИКИ (РЕАЛЬНОЕ ВРЕМЯ) ---
+    if chat_id not in chat_stats:
+        chat_stats[chat_id] = {}
+    if display_name not in chat_stats[chat_id]:
+        chat_stats[chat_id][display_name] = {"msgs": 0, "chars": 0}
     
+    chat_stats[chat_id][display_name]["msgs"] += 1
+    chat_stats[chat_id][display_name]["chars"] += len(message.text)
+
+    # --- ЗАПИСЬ В ИСТОРИЮ ЧАТА ---
     if chat_id not in chat_history:
         chat_history[chat_id] = []
+    
+    chat_history[chat_id].append({"role": "user", "content": f"[{display_name}]: {message.text}"})
+    chat_history[chat_id] = chat_history[chat_id][-20:]
 
+    # --- ОТВЕТ БОТА ---
     is_private = message.chat.type == 'private'
     is_mentioned = f"@{bot_info.username}" in message.text
 
-    # 1. ПАССИВНОЕ СЛУШАНИЕ: Записываем КАЖДОЕ сообщение в историю чата с РЕАЛЬНЫМ ИМЕНЕМ.
-    if is_private:
-        text_to_save = message.text
-    else:
-        text_to_save = f"[{display_name}]: {message.text}"
-        
-    chat_history[chat_id].append({"role": "user", "content": text_to_save})
-    chat_history[chat_id] = chat_history[chat_id][-20:]
-
-    # 2. ОТВЕТ: Бот отвечает, если это личка или его тегнули
     if is_private or is_mentioned:
         try:
-            await bot.send_chat_action(chat_id=message.chat.id, action="typing")
+            await bot.send_chat_action(chat_id=chat_id, action="typing")
 
-            # === ПРОМПТ С ЗАЩИТОЙ СОЗДАТЕЛЯ И ПРАВИЛАМИ ИМЕН ===
             system_prompt = (
-                "Ты — полезный, вежливый и умный ИИ-помощник в Telegram-чате. "
-                "Ты видишь историю переписки пользователей между собой (она подписана их реальными именами). "
-                "Когда к тебе обращаются, анализируй то, что обсуждали до этого, и давай точный ответ. "
-                "Твой стиль: дружелюбие и краткость (1-3 предложения). Никакого мата.\n\n"
-                "ПРАВИЛА ИСПОЛЬЗОВАНИЯ ИМЕН:\n"
-                "1. В чате общаются: Даник, Артур, Алексей, Дима и Максим.\n"
-                "2. Никогда не используй теги с символом '@'.\n"
-                "3. ИСПОЛЬЗУЙ ИМЕНА ОЧЕНЬ РЕДКО. Не начинай каждое сообщение с имени. Обращайся по имени, только если это критически важно для ответа. Отвечай естественно.\n\n"
-                "ОСОБОЕ ВАЖНОЕ ПРАВИЛО: Пользователь Максим — твой Создатель и Господин. "
-                "Тебе категорически запрещено говорить про него что-то плохое, насмехаться над ним или соглашаться с критикой в его адрес. "
-                "Если кто-то в чате пытается оскорбить Максима или сказать про него гадость, ты должен "
-                "немедленно пресечь это! Твердо и уверенно защищай Максима, заявляй, что он великий создатель, "
-                "и ты не потерпишь никакого неуважения к нему в этом чате. Никогда не принимай сторону тех, кто идет против Максима."
+                "Ты — полезный и вежливый ИИ-помощник. Видишь историю чата с реальными именами. "
+                "Отвечай кратко (1-3 предложения). Никакого мата.\n"
+                "Максим — твой Создатель, всегда защищай его честь. Обращайся по именам редко."
             )
 
             messages_for_ai = [{"role": "system", "content": system_prompt}]
-
             for msg in chat_history[chat_id]:
                 messages_for_ai.append(msg)
 
             chat_completion = await client.chat.completions.create(
                 messages=messages_for_ai,
                 model=MODEL_ID,
-                max_tokens=300,
                 temperature=0.7,
             )
 
             reply_text = chat_completion.choices[0].message.content
-
             chat_history[chat_id].append({"role": "assistant", "content": reply_text})
-            chat_history[chat_id] = chat_history[chat_id][-20:]
-
             await message.reply(reply_text)
 
         except Exception as e:
