@@ -107,6 +107,50 @@ async def get_stats_analysis(message: types.Message):
     except Exception as e:
         await message.reply(f"Ошибка анализа: {e}")
 
+# === КОМАНДА ДЛЯ РАЗБОРА RP СИТУАЦИЙ ===
+@dp.message(Command("rp"))
+async def analyze_rp(message: types.Message):
+    situation = message.text.replace("/rp", "").strip()
+    
+    if not situation:
+        await message.answer("Опиши ситуацию. Например: /rp нас грабили в ЗЗ втроем, а мы были вдвоем.")
+        return
+
+    await bot.send_chat_action(chat_id=message.chat.id, action="typing")
+
+    # Пытаемся прочитать файл с правилами
+    try:
+        with open("majestic_rules.txt", "r", encoding="utf-8") as f:
+            rules_text = f.read()
+    except FileNotFoundError:
+        await message.answer("Файл majestic_rules.txt не найден! Максим, залей правила на GitHub.")
+        return
+
+    # Отрезаем лишнее, чтобы не перегрузить лимиты API (20к символов обычно хватает с головой)
+    rules_text = rules_text[:20000]
+
+    # Промпт для Админа
+    rp_prompt = (
+        "Ты — строгий, справедливый и опытный Главный Администратор сервера Majestic RP в GTA 5. "
+        "Тебе предоставлены официальные правила сервера. Твоя задача — внимательно прочитать ситуацию игрока "
+        "и вынести вердикт строго на основе этих правил. Укажи, какие конкретно термины (DM, PG, VDM, MG и т.д.) "
+        "или пункты правил были нарушены, и кто виноват в ситуации. Отвечай четко, по фактам, как настоящий админ.\n\n"
+        f"ПРАВИЛА СЕРВЕРА ДЛЯ АНАЛИЗА:\n{rules_text}"
+    )
+
+    try:
+        completion = await client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": rp_prompt},
+                {"role": "user", "content": f"Разбери эту ситуацию по правилам: {situation}"}
+            ],
+            model=MODEL_ID,
+            temperature=0.2, # Низкая температура для максимальной точности фактов
+        )
+        await message.reply(completion.choices[0].message.content)
+    except Exception as e:
+        await message.reply(f"Не смог разобрать ситуацию. Возможно, текст правил слишком большой для бесплатного лимита. Ошибка: {e}")
+
 # === ОСНОВНОЙ ОБРАБОТЧИК ===
 @dp.message()
 async def talk(message: types.Message):
