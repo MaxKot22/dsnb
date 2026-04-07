@@ -2,6 +2,7 @@ import os
 import asyncio
 import threading
 import json
+import time # Добавили для подсчета времени между сообщениями
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -31,7 +32,7 @@ dp = Dispatcher()
 
 # Словари памяти
 chat_history = {}  # Для контекста беседы
-chat_stats = {}    # Для счетчиков сообщений и символов
+chat_stats = {}    # Для счетчиков сообщений, символов и времени
 
 # Словарь для перевода тегов в реальные имена
 KNOWN_USERS = {
@@ -47,6 +48,17 @@ async def start_cmd(message: types.Message):
     chat_stats[message.chat.id] = {}
     await message.answer("Система запущена! Я начал сбор статистики. Общайтесь, а по команде /stats я проанализирую вашу активность.")
 
+# === КОМАНДА ДЛЯ СБРОСА СТАТИСТИКИ (ТОЛЬКО ДЛЯ МАКСИМА) ===
+@dp.message(Command("reset_stats"))
+async def reset_stats_cmd(message: types.Message):
+    # Проверяем, что команду вызвал именно создатель
+    if message.from_user.username == "papi_maxi":
+        chat_id = message.chat.id
+        chat_stats[chat_id] = {}  # Очищаем статистику
+        await message.answer("✅ Статистика успешно сброшена, мой Создатель.")
+    else:
+        await message.reply("Только Максим может сбросить статистику.")
+
 # === КОМАНДА ДЛЯ АНАЛИЗА СТАТИСТИКИ ===
 @dp.message(Command("stats"))
 async def get_stats_analysis(message: types.Message):
@@ -58,29 +70,38 @@ async def get_stats_analysis(message: types.Message):
 
     await bot.send_chat_action(chat_id=chat_id, action="typing")
 
-    # Формируем отчет для нейросети на основе реальных данных
-    raw_stats_report = "Данные по активности участников:\n"
+    # Формируем отчет для нейросети на основе реальных данных и времени
+    raw_stats_report = "Данные по активности:\n"
     for user, data in chat_stats[chat_id].items():
         avg_len = data['chars'] // data['msgs'] if data['msgs'] > 0 else 0
-        raw_stats_report += f"- {user}: {data['msgs']} сообщений, {data['chars']} символов всего (в среднем {avg_len} на сообщение).\n"
+        
+        # Считаем среднюю паузу между сообщениями в минутах
+        if data['msgs'] > 1:
+            avg_interval_min = (data['total_interval'] / (data['msgs'] - 1)) / 60
+        else:
+            avg_interval_min = 0.0
+            
+        raw_stats_report += f"- {user}: {data['msgs']} сообщ., {avg_len} симв. в среднем, пауза между сообщениями ~{avg_interval_min:.1f} мин.\n"
 
-    # Промпт для ИИ-аналитика
+    # Промпт для ИИ-аналитика (с фокусом на поощрение активности и выявление пассивности)
     analyst_prompt = (
-        "Ты — ироничный и проницательный аналитик чата. Тебе дали статистику активности участников. "
-        "Твоя задача: проанализировать стиль каждого. Кто пишет много коротких фраз (спамер), а кто редко, но длинно (философ). "
-        "Сделай смешные выводы и подколи участников за их привычки. "
-        "ОСОБОЕ ПРАВИЛО: Максим — твой создатель. Хвали его за любую активность, называй это гениальным лаконизмом или мудрой глубиной. "
-        "Не используй мат и символы @. Имена: Даник, Артур, Алексей, Дима, Максим."
+        "Ты — простая ИИ-функция для вывода статистики. Выдай ОЧЕНЬ КОРОТКИЙ ответ (максимум 2-3 предложения). "
+        "Твоя задача: похвалить тех, кто пишет много (активность — это отлично), и жестко подчеркнуть ПАССИВНОСТЬ тех, кто пишет редко. "
+        "Пассивный участник — это тот, у кого большие паузы между сообщениями, мало сообщений и мало символов (заходит раз в час, кидает пару букв и исчезает). "
+        "Укажи на пассивных. Ни в коем случае не ругай за большое количество сообщений. "
+        "ОСОБОЕ ПРАВИЛО: Максим — твой создатель. Хвали его всегда. Если он пассивен, назови это 'созерцанием гения'. "
+        "Не используй мат и символы @."
     )
 
     try:
         completion = await client.chat.completions.create(
             messages=[
                 {"role": "system", "content": analyst_prompt},
-                {"role": "user", "content": f"Проанализируй эти цифры и выдай вердикт:\n{raw_stats_report}"}
+                {"role": "user", "content": f"Проанализируй эти цифры и выдай очень короткую выжимку:\n{raw_stats_report}"}
             ],
             model=MODEL_ID,
-            temperature=0.8,
+            temperature=0.7,
+            max_tokens=200, # Сильно ограничили, чтобы ответ был коротким
         )
         await message.reply(completion.choices[0].message.content)
     except Exception as e:
@@ -94,23 +115,29 @@ async def talk(message: types.Message):
 
     bot_info = await bot.get_me()
     chat_id = message.chat.id
+    current_time = time.time() # Текущее время для подсчета пауз
     
     # --- ОПРЕДЕЛЕНИЕ ИМЕНИ ---
     raw_username = message.from_user.username
     if raw_username and raw_username in KNOWN_USERS:
         display_name = KNOWN_USERS[raw_username]
     else:
-        # Если это Дима (нет тега) или другой новый участник
         display_name = message.from_user.first_name or "Дима"
 
-    # --- СБОР СТАТИСТИКИ (РЕАЛЬНОЕ ВРЕМЯ) ---
+    # --- СБОР СТАТИСТИКИ И ИНТЕРВАЛОВ (РЕАЛЬНОЕ ВРЕМЯ) ---
     if chat_id not in chat_stats:
         chat_stats[chat_id] = {}
     if display_name not in chat_stats[chat_id]:
-        chat_stats[chat_id][display_name] = {"msgs": 0, "chars": 0}
+        chat_stats[chat_id][display_name] = {"msgs": 0, "chars": 0, "last_time": current_time, "total_interval": 0}
     
+    # Считаем паузу между прошлым и текущим сообщением
+    if chat_stats[chat_id][display_name]["msgs"] > 0:
+        interval = current_time - chat_stats[chat_id][display_name]["last_time"]
+        chat_stats[chat_id][display_name]["total_interval"] += interval
+        
     chat_stats[chat_id][display_name]["msgs"] += 1
     chat_stats[chat_id][display_name]["chars"] += len(message.text)
+    chat_stats[chat_id][display_name]["last_time"] = current_time # Обновляем время последнего сообщения
 
     # --- ЗАПИСЬ В ИСТОРИЮ ЧАТА ---
     if chat_id not in chat_history:
