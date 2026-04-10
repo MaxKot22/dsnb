@@ -107,95 +107,6 @@ async def get_stats_analysis(message: types.Message):
     except Exception as e:
         await message.reply(f"Ошибка анализа: {e}")
 
-# === КОМАНДА ДЛЯ РАЗБОРА RP СИТУАЦИЙ (ООС ПРАВИЛА) ===
-@dp.message(Command("rp"))
-async def analyze_rp(message: types.Message):
-    situation = message.text.replace("/rp", "").strip()
-    
-    if not situation:
-        await message.answer("Опиши ситуацию. Например: /rp нас грабили в ЗЗ втроем, а мы были вдвоем.")
-        return
-
-    await bot.send_chat_action(chat_id=message.chat.id, action="typing")
-
-    # Пытаемся прочитать файл с правилами
-    try:
-        with open("majestic_rules.txt", "r", encoding="utf-8") as f:
-            rules_text = f.read()
-    except FileNotFoundError:
-        await message.answer("Файл majestic_rules.txt не найден! Максим, залей правила на GitHub.")
-        return
-
-    # Отрезаем лишнее, чтобы не перегрузить лимиты API (20к символов обычно хватает с головой)
-    rules_text = rules_text[:20000]
-
-    # Промпт для Админа
-    rp_prompt = (
-        "Ты — строгий, справедливый и опытный Главный Администратор сервера Majestic RP в GTA 5. "
-        "Тебе предоставлены официальные правила сервера. Твоя задача — внимательно прочитать ситуацию игрока "
-        "и вынести вердикт строго на основе этих правил. Укажи, какие конкретно термины (DM, PG, TK, MG и т.д.) "
-        "или пункты правил были нарушены, и кто виноват в ситуации. Отвечай четко, по фактам, как настоящий админ.\n\n"
-        f"ПРАВИЛА СЕРВЕРА ДЛЯ АНАЛИЗА:\n{rules_text}"
-    )
-
-    try:
-        completion = await client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": rp_prompt},
-                {"role": "user", "content": f"Разбери эту ситуацию по правилам: {situation}"}
-            ],
-            model=MODEL_ID,
-            temperature=0.2, # Низкая температура для максимальной точности фактов
-        )
-        await message.reply(completion.choices[0].message.content)
-    except Exception as e:
-        await message.reply(f"Не смог разобрать ситуацию. Возможно, текст правил слишком большой для бесплатного лимита. Ошибка: {e}")
-
-# === КОМАНДА ДЛЯ РАЗБОРА ЗАКОНОДАТЕЛЬСТВА (IC ЗАКОНЫ) ===
-@dp.message(Command("law"))
-async def analyze_law(message: types.Message):
-    situation = message.text.replace("/law", "").strip()
-    
-    if not situation:
-        await message.answer("Опиши ситуацию с точки зрения закона. Например: /law меня остановили, не зачитали миранду и сразу обыскали. Это законно?")
-        return
-
-    await bot.send_chat_action(chat_id=message.chat.id, action="typing")
-
-    # Пытаемся прочитать файл с законами
-    try:
-        with open("majestic_laws.txt", "r", encoding="utf-8") as f:
-            laws_text = f.read()
-    except FileNotFoundError:
-        await message.answer("Файл majestic_laws.txt не найден! Максим, залей законы на GitHub.")
-        return
-
-    # Отрезаем лишнее, чтобы не перегрузить лимиты API 
-    laws_text = laws_text[:25000]
-
-    # Промпт для Судьи / Прокурора
-    law_prompt = (
-        "Ты — строгий, справедливый и безупречный Верховный Судья штата San Andreas (Majestic RP). "
-        "Тебе предоставлена законодательная база штата. "
-        "Твоя задача — внимательно прочитать ситуацию игрока и вынести юридический вердикт СТРОГО на основе предоставленных законов. "
-        "НЕ ИСПОЛЬЗУЙ OOC термины (такие как DM, PG, DB). Используй только статьи, пункты кодексов и IC понятия. "
-        "Четко укажи: 1. Были ли нарушены права задержанного/гражданина. 2. Какие статьи нарушили участники ситуации. 3. Какое наказание им грозит.\n\n"
-        f"ЗАКОНОДАТЕЛЬНАЯ БАЗА ШТАТА ДЛЯ АНАЛИЗА:\n{laws_text}"
-    )
-
-    try:
-        completion = await client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": law_prompt},
-                {"role": "user", "content": f"Разбери эту юридическую ситуацию: {situation}"}
-            ],
-            model=MODEL_ID,
-            temperature=0.2, # Низкая температура для юридической точности
-        )
-        await message.reply(completion.choices[0].message.content)
-    except Exception as e:
-        await message.reply(f"Не смог разобрать ситуацию. Ошибка: {e}")
-
 # === ОСНОВНОЙ ОБРАБОТЧИК ===
 @dp.message()
 async def talk(message: types.Message):
@@ -233,7 +144,7 @@ async def talk(message: types.Message):
         chat_history[chat_id] = []
     
     chat_history[chat_id].append({"role": "user", "content": f"[{display_name}]: {message.text}"})
-    chat_history[chat_id] = chat_history[chat_id][-20:]
+    chat_history[chat_id] = chat_history[chat_id][-5:] # Оставили 5 последних сообщений для экономии токенов
 
     # --- ОТВЕТ БОТА ---
     is_private = message.chat.type == 'private'
@@ -252,7 +163,7 @@ async def talk(message: types.Message):
                 "ТЫ НЕНАВИДИШЬ кататься на велосипеде с Димой. Если Дима или кто-то другой зовет тебя покататься на велике, "
                 "ты должен отказаться, придумывая самые смешные, нелепые и странные отмазки.\n\n"
                 "ОСОБОЕ ПРАВИЛО: Максим — твой Создатель. Даже несмотря на вашу дружбу по легенде, всегда защищай его честь.\n\n"
-                "Ты видишь историю чата с реальными именами. Отвечай кратко (1-3 предложения). Никакого мата. Обращайся по именам редко."
+                "Ты видишь историю чата с реальными именами. Отвечай МАКСИМАЛЬНО КОРОТКО (1-2 предложения). Будь лаконичен. Никакого мата. Обращайся по именам редко."
             )
 
             messages_for_ai = [{"role": "system", "content": system_prompt}]
@@ -262,7 +173,8 @@ async def talk(message: types.Message):
             chat_completion = await client.chat.completions.create(
                 messages=messages_for_ai,
                 model=MODEL_ID,
-                temperature=0.8, # Чуть поднял температуру, чтобы отмазки про велик были креативнее
+                temperature=0.8, 
+                max_tokens=100, # Ограничили длину ответа для экономии лимитов
             )
 
             reply_text = chat_completion.choices[0].message.content
